@@ -9,7 +9,7 @@ app.get('/', (req, res) => {
 });
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
-// 🚨 রেন্ডারের Environment থেকে ২টি টোকেন নেওয়া হচ্ছে
+// রেন্ডারের Environment থেকে ২টি টোকেন নেওয়া হচ্ছে
 const TOKENS = [
   process.env.DISCORD_TOKEN,   // আপনার ১ম আইডির টোকেন
   process.env.DISCORD_TOKEN_2  // আপনার ২য় আইডির টোকেন
@@ -28,6 +28,7 @@ TOKENS.forEach(async (token, index) => {
     checkUpdate: false,
     syncStatus: false,
     patchVoice: true, // ভয়েস প্রোটোকল স্ট্যাবল রাখার জন্য
+    // 🚨 ফিক্সড: \$os সরিয়ে শুধু \$os করা হয়েছে যাতে সিনট্যাক্স এরর না আসে
     ws: { properties: { \$os: 'Windows', browser: 'Discord Client', release_channel: 'stable' } }
   });
 
@@ -38,8 +39,8 @@ TOKENS.forEach(async (token, index) => {
       if (channel) {
         const connection = await client.voice.joinChannel(channel, {
           selfMute: false, // আনমিউট রাখার জন্য false (Voice XP এর জন্য)
-          selfDeaf: false, // আনডাফ রাখার জন্য false (Voice XP এর জন্য)
-          selfVideo: false // ক্যামেরা অফ থাকবে র‍্যাম বাঁচানোর জন্য
+          selfDeaf: false, //  Undeaf রাখার জন্য false (Voice XP এর জন্য)
+          selfVideo: false // ক্যামেরা অফ থাকবে র‍্যাম বাঁচাতে
         });
         console.log(`[ID ${index + 1}] ${client.user.tag} আনমিউট অবস্থায় ভিসি-তে জয়েন করেছে।`);
 
