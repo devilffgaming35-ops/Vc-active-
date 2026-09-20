@@ -28,8 +28,8 @@ TOKENS.forEach(async (token, index) => {
     checkUpdate: false,
     syncStatus: false,
     patchVoice: true, // ভয়েস প্রোটোকল স্ট্যাবল রাখার জন্য
-    // 🚨 ফিক্সড: \$os সরিয়ে শুধু \$os করা হয়েছে যাতে সিনট্যাক্স এরর না আসে
-    ws: { properties: { \$os: 'Windows', browser: 'Discord Client', release_channel: 'stable' } }
+    // 🚨 ফিক্সড: \$os সরিয়ে জাস্ট '\$os' স্ট্রিং ফরম্যাটে দেওয়া হয়েছে যাতে কোনো সিনট্যাক্স এরর না আসে
+    ws: { properties: { "\$os": "Windows", "browser": "Discord Client", "release_channel": "stable" } }
   });
 
   // ভিসি-তে জয়েন করার ফাংশন
@@ -39,7 +39,7 @@ TOKENS.forEach(async (token, index) => {
       if (channel) {
         const connection = await client.voice.joinChannel(channel, {
           selfMute: false, // আনমিউট রাখার জন্য false (Voice XP এর জন্য)
-          selfDeaf: false, //  Undeaf রাখার জন্য false (Voice XP এর জন্য)
+          selfDeaf: false, // Undeaf রাখার জন্য false (Voice XP এর জন্য)
           selfVideo: false // ক্যামেরা অফ থাকবে র‍্যাম বাঁচাতে
         });
         console.log(`[ID ${index + 1}] ${client.user.tag} আনমিউট অবস্থায় ভিসি-তে জয়েন করেছে।`);
@@ -78,7 +78,8 @@ TOKENS.forEach(async (token, index) => {
         .setStartTimestamp(Date.now())
         .setAssetsLargeImage('https://postimg.cc') 
         .setAssetsLargeText('Chithi Ghor')
-        .addButton('Join Server', 'https://discord.gg'); // আপনার ইনভাইট লিঙ্ক দিবেন
+        // নিচে আপনার আসল সার্ভারের ইনভাইট লিঙ্কটি বসিয়ে দিন
+        .addButton('Join Server', 'https://discord.gg'); 
 
       client.user.setActivity(r);
     } catch (err) {
