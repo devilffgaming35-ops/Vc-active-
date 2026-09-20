@@ -30,17 +30,23 @@ client.on('ready', async () => {
     console.error("ভিসি-তে জয়েন করতে সমস্যা হয়েছে:", error);
   }
 
-  // ২. আপনার পছন্দমতো পারফেক্ট রিচ প্রেজেন্স (Rich Presence) সেট করার অংশ
+  // ২. পারফেক্ট রিচ প্রেজেন্স (Streaming Mode + Server Logo + Watching Title + Join Button)
   try {
     const r = new RichPresence(client)
-      .setType('WATCHING') 
-      .setName('Chithi Ghor') // প্রোফাইলে "Watching Chithi Ghor" দেখাবে
-      .setStartTimestamp(Date.now()) // প্রোফাইলে ঢুকলে সময় (যেমন: 01:23 elapsed) লাইভ কাউন্ট করবে
-      // নিচের লিঙ্কের জায়গায় আপনার আসল ডিসকর্ড সার্ভারের ইনভাইট লিঙ্কটি বসিয়ে দিন
+      .setType('STREAMING') // প্রোফাইলে বেগুনি রঙের "Streaming" লাইভ মোড দেখানোর জন্য
+      .setURL('https://twitch.tv') // স্ট্রিমিং মোড অন করতে যেকোনো একটি লিংক দিতেই হয়
+      .setName('Chithi Ghor') // এর ফলে প্রোফাইলের মেইন লাইনে "Watching Chithi Ghor" লেখা আসবে
+      .setStartTimestamp(Date.now()) // প্রোফাইলে ঢুকলে কতক্ষণ ধরে দেখছে (Elapsed Time) তা কাউন্ট হবে
+      
+      // আপনার সার্ভারের লোগোর ডিরেক্ট ইমেজ লিংক নিচে বসান (অবশ্যই লিঙ্কের শেষে .png বা .jpg থাকতে হবে)
+      .setAssetsLargeImage('https://ibb.co.com/vxwXZfQG') 
+      .setAssetsLargeText('Chithi Ghor') // ছবির ওপর মাউস রাখলে এই লেখাটি দেখাবে
+      
+      // নিচে আপনার আসল ডিসকর্ড সার্ভারের ইনভাইট লিঙ্কটি বসিয়ে দিন
       .addButton('Join Server', 'https://discord.gg/5ztwsyqdgy'); 
 
     client.user.setActivity(r);
-    console.log("কাস্টম রিচ প্রেজেন্স সফলভাবে সেট হয়েছে।");
+    console.log("লোগো এবং স্ট্রিমিং মোডসহ কাস্টম রিচ প্রেজেন্স সেট হয়েছে।");
   } catch (error) {
     console.error("স্ট্যাটাস সেট করতে সমস্যা হয়েছে:", error);
   }
