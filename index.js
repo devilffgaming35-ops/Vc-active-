@@ -2,29 +2,24 @@ const { Client, RichPresence } = require('discord.js-selfbot-v13');
 const express = require('express');
 const app = express();
 
-// Render সার্ভার সচল রাখার জন্য পোর্ট
 const port = process.env.PORT || 8080; 
-app.get('/', (req, res) => res.send('৪টি অ্যাকাউন্টই কাস্টম স্ট্যাটাস ও আনমিউট ভিসি-তে সক্রিয় আছে!'));
+app.get('/', (req, res) => res.send('৩টি অ্যাকাউন্টই ওওএম প্রোটেকশন ও স্ট্যাবল স্ট্যাটাসে সক্রিয় আছে!'));
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
-// রেন্ডারের Environment থেকে ৪টি টোকেন নেওয়া হচ্ছে
+// 🚨 ফিক্সড: শুধুমাত্র ৩টি আইডি ট্র্যাক করা হচ্ছে
 const TOKENS = [
   process.env.DISCORD_TOKEN,   // ১ম আইডি
   process.env.DISCORD_TOKEN_2, // ২য় আইডি
-  process.env.DISCORD_TOKEN_3, // ৩য় আইডি
-  process.env.DISCORD_TOKEN_4  // ৪র্থ আইডি
+  process.env.DISCORD_TOKEN_3  // ৩য় আইডি
 ];
 
 const VC_ID = '1126797582715326524'; // আপনার ভয়েস চ্যানেলের আইডি
-
-// ডিলে বা বিরতি তৈরি করার ফাংশন
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// প্রতিটি টোকেন প্রোসেস করার মূল লুপ
 TOKENS.forEach(async (token, index) => {
-  if (!token) return; // টোকেন খালি থাকলে স্কিপ করবে
+  if (!token) return;
 
-  // ৪টি আইডি একসাথে হিট করে যাতে রেট-লিমিটে না পড়ে, তাই ৮ সেকেন্ড করে গ্যাপ দেওয়া হলো
+  // রেট-লিমিট এড়াতে প্রতিটি আইডির মাঝে ৮ সেকেন্ডের গ্যাপ
   const initialWait = index * 8000;
   await delay(initialWait);
 
@@ -32,17 +27,17 @@ TOKENS.forEach(async (token, index) => {
     checkUpdate: false,
     syncStatus: false,
     patchVoice: true,
+    makeCache: () => new Map(), // র‍্যাম বাঁচানোর জন্য ক্যাশ মেমোরি খালি রাখা হলো
     ws: { properties: { "\$os": "Windows", "browser": "Discord Client", "release_channel": "stable" } }
   });
 
-  // ভিসি-তে জয়েন ও সচল রাখার ফাংশন
   const connectToVC = async () => {
     try {
       const channel = await client.channels.fetch(VC_ID);
       if (channel) {
         const connection = await client.voice.joinChannel(channel, {
-          selfMute: false, // আনমিউট (XP এর জন্য)
-          selfDeaf: false, // আনডাফ (XP এর জন্য)
+          selfMute: false, 
+          selfDeaf: false, 
           selfVideo: false
         });
         console.log(`[Success] [ID ${index + 1}] ${client.user.tag} ভিসি-তে জয়েন করেছে।`);
@@ -70,15 +65,15 @@ TOKENS.forEach(async (token, index) => {
     await delay(3000);
     await connectToVC();
 
-    // 🚨 লিঙ্ক ও নাম ছাড়া শুধুমাত্র Watching + Bio-তে Dancing স্ট্যাটাস মডিউল
     await delay(2000);
     try {
+      // লিঙ্ক ও নাম ছাড়া ক্লিন "Watching (Dancing)" স্ট্যাটাস
       const r = new RichPresence(client)
         .setType('WATCHING') 
-        .setName(' ') // নাম খালি রাখার জন্য ব্ল্যাঙ্ক স্পেস দেওয়া হয়েছে (শুধু "Watching" দেখাবে)
-        .setState('Dancing') // প্রোফাইলের সাব-টাইটেল বা বায়োর ঘরে "Dancing" দেখাবে
-        .setStartTimestamp(Date.now()) // টাইমার লাইভ কাউন্ট হবে
-        .setAssetsLargeImage('https://postimg.cc'); // আপনার লোগো (এর ওপর কোনো টেক্সট থাকবে না)
+        .setName(' ') // নাম খালি থাকবে
+        .setState('Dancing') // সাবটাইটেলে Dancing দেখাবে
+        .setStartTimestamp(Date.now()) // টাইমার অন থাকবে
+        .setAssetsLargeImage('https://postimg.cc'); 
 
       client.user.setActivity(r);
       console.log(`[Status Set] [ID ${index + 1}] কাস্টম রিচ প্রেজেন্স সচল হয়েছে।`);
