@@ -74,7 +74,7 @@ TOKENS.forEach(async (token, index) => {
   });
 
   client.on('shardDisconnect', () => {
-    console.log(`[Disconnect] [ID ${index + 1}] গেটওয়ে ড্রপ! ৫ সেকেন্ড পর রিলগইন হচ্ছে...`);
+    console.log(`[Disconnect] [ID ${index + 1}] ... গেটওয়ে ড্রপ! ৫ সেকেন্ড পর রিলগইন হচ্ছে...`);
     setTimeout(() => client.login(token).catch(() => {}), 5000);
   });
 
