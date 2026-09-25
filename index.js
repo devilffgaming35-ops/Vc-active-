@@ -1,82 +1,58 @@
 const { Client } = require('discord.js-selfbot-v13');
-const express = require('express');
-const app = express();
+const { joinVoiceChannel } = require('@discordjs/voice');
 
-const port = process.env.PORT || 8080; 
-app.get('/', (req, res) => res.send('৩টি অ্যাকাউন্টই ওওএম প্রোটেকশন ও আনমিউট ভিসি মোডে সক্রিয় আছে!'));
-app.listen(port, () => console.log(`Server running on port ${port}`));
-
-process.on('unhandledRejection', (e) => console.error('Caught Rejection:', e.message));
-process.on('uncaughtException', (e) => console.error('Caught Exception:', e.message));
-
-const TOKENS = [
-  process.env.DISCORD_TOKEN,   
-  process.env.DISCORD_TOKEN_2, 
-  process.env.DISCORD_TOKEN_3  
+// Render Environment Variables থেকে টোকেনগুলো নেওয়া হচ্ছে
+const tokens = [
+  process.env.DISCORD_TOKEN,
+  process.env.DISCORD_TOKEN_2,
+  process.env.DISCORD_TOKEN_3
 ];
 
-const VC_ID = '1126797582715326524'; 
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const channelId = process.env.VOICE_CHANNEL_ID;
 
-TOKENS.forEach(async (token, index) => {
-  if (!token) return;
+tokens.forEach((token, index) => {
+  // যদি রেন্ডার ড্যাশবোর্ডে কোনো টোকেন বসানোই না থাকে
+  if (!token) {
+    console.log(`⚠️ ID ${index + 1}: রেন্ডার এনভায়রনমেন্টে DISCORD_TOKEN_${index + 1} সেট করা নেই! স্কিপ করা হলো।`);
+    return;
+  }
 
-  const initialWait = index * 10000;
-  await delay(initialWait);
+  const client = new Client({ checkUpdate: false });
 
-  const client = new Client({ 
-    checkUpdate: false,
-    syncStatus: false,
-    patchVoice: true
-  });
-
-  const connectToVC = async () => {
-    try {
-      const channel = await client.channels.fetch(VC_ID).catch(() => null);
-      if (channel) {
-        const connection = await client.voice.joinChannel(channel, {
-          selfMute: false, 
-          selfDeaf: false, 
-          selfVideo: false 
-        }).catch(() => null);
-
-        if (connection) {
-          console.log(`[Success] [ID ${index + 1}] ${client.user.tag} ভিসি-তে জয়েন করেছে।`);
-          
-          const keepVoiceAlive = () => {
-            if (client.ws.status !== 0) return;
-            try {
-              connection.setSpeaking(true);
-              setTimeout(() => { try { connection.setSpeaking(false); } catch(e){} }, 1000);
-            } catch (e) {}
-            setTimeout(keepVoiceAlive, 30000); 
-          };
-          keepVoiceAlive();
-        }
-      }
-    } catch (err) {
-      console.error(`[Error] [ID ${index + 1}] ভিসি জয়েন ব্যর্থ:`, err.message);
-      setTimeout(connectToVC, 20000);
-    }
-  };
-
+  // আইডি সফলভাবে লগইন হলে
   client.on('ready', async () => {
-    console.log(`[Logged In] [ID ${index + 1}] ${client.user.tag}`);
-    await delay(3000); 
-    await connectToVC();
-  });
+    console.log(`✅ ID ${index + 1} [${client.user.username}] login success!`);
 
-  client.on('voiceStateUpdate', (oldState, newState) => {
-    if (oldState.member.id === client.user.id && !newState.channelId) {
-      console.log(`[Alert] [ID ${index + 1}] ভিসি বিচ্ছিন্ন হয়েছে! ৫ সেকেন্ড পর পুনরায় চেষ্টা করা হচ্ছে...`);
-      setTimeout(connectToVC, 5000);
+    const channel = client.channels.cache.get(channelId);
+    if (channel) {
+      try {
+        joinVoiceChannel({
+          channelId: channel.id,
+          guildId: channel.guild.id,
+          adapterCreator: channel.guild.voiceAdapterCreator,
+          selfMute: false,  // Unmute রাখার জন্য false
+          selfDeaf: false,  // Undeaf রাখার জন্য false
+        });
+        console.log(`🔊 ID ${index + 1} [${client.user.username}] VC join success!`);
+      } catch (error) {
+        console.error(`❌ ID ${index + 1} [${client.user.username}] VC join failed (ভয়েস চ্যানেলে ঢুকতে ব্যর্থ):`, error);
+      }
+    } else {
+      console.log(`❌ ID ${index + 1} [${client.user.username}]: ভয়েস চ্যানেল খুঁজে পাওয়া যায়নি! আইডি ঠিক আছে কি না চেক করুন।`);
     }
   });
 
-  client.on('shardDisconnect', () => {
-    console.log(`[Disconnect] [ID ${index + 1}] ... গেটওয়ে ড্রপ! ৫ সেকেন্ড পর রিলগইন হচ্ছে...`);
-    setTimeout(() => client.login(token).catch(() => {}), 5000);
+  // লগইন করতে ব্যর্থ হলে বা টোকেন নষ্ট হলে এই অংশটি রান করবে
+  client.login(token).catch(err => {
+    console.error(`❌ ID ${index + 1}: login করতে ব্যর্থ! [টোকেন নষ্ট, ভুল বা এক্সপায়ারড]`);
   });
+});
 
-  client.login(token).catch(err => console.error(`[Login Failed] [ID ${index + 1}]`));
+// UptimeRobot এবং Render-এর জন্য HTTP Server
+const http = require('http');
+http.createServer((req, res) => {
+  res.write("Selfbot is running!");
+  res.end();
+}).listen(process.env.PORT || 3000, () => {
+  console.log("🌐 Web server is live for UptimeRobot!");
 });
