@@ -1,109 +1,76 @@
-const { Client, RichPresence } = require('discord.js-selfbot-v13');
+const { Client } = require('discord.js-selfbot-v13');
 const express = require('express');
 const app = express();
 
 // Render সার্ভার সচল রাখার জন্য এক্সপ্রেস পোর্ট
 const port = process.env.PORT || 8080; 
 app.get('/', (req, res) => {
-  res.send('৩টি অ্যাকাউন্টই ২৪ ঘণ্টা আনমিউট অবস্থায় ভিসি-তে সক্রিয় আছে!');
+  res.send('৩টি আইডি সম্পূর্ণ সেফ মোডে ভিসি-তে সক্রিয় আছে!');
 });
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
-// রেন্ডারের Environment থেকে ৩টি টোকেন নেওয়া হচ্ছে
+// রেন্ডার এনভায়রনমেন্ট থেকে টোকেন
 const TOKENS = [
-  process.env.DISCORD_TOKEN,   // আপনার ১ম আইডির টোকেন
-  process.env.DISCORD_TOKEN_2, // আপনার ২য় আইডির টোকেন
-  process.env.DISCORD_TOKEN_3  // আপনার ৩য় আইডির টোকেন (নতুন যুক্ত করা হয়েছে)
+  process.env.DISCORD_TOKEN,   
+  process.env.DISCORD_TOKEN_2, 
+  process.env.DISCORD_TOKEN_3  
 ];
 
 const VC_ID = '1126797582715326524'; // আপনার ভয়েস চ্যানেলের আইডি
 
-// মানুষের মতো আচরণ তৈরির জন্য র্যান্ডম ডিলের ফাংশন
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// প্রধান রানার ফাংশন যা সিরিয়ালি ১টি করে আইডি লগইন করাবে
 const startBots = async () => {
   for (let index = 0; index < TOKENS.length; index++) {
     const token = TOKENS[index];
-    if (!token) continue; // যদি কোনো টোকেন খালি থাকে তবে এড়িয়ে যাবে
+    if (!token) continue;
 
-    // ডিসকর্ডের রেট-লিমিট এড়াতে পরবর্তী আইডি লগইন করার আগে ৬ সেকেন্ড গ্যাপ
+    // অ্যান্টি-ব্যান প্রোটেকশন: প্রতি আইডির মাঝে ৬ সেকেন্ডের সেফ গ্যাপ
     if (index > 0) {
-      console.log(`[ID ${index + 1}] রেট-লিমিট এড়াতে ৬ সেকেন্ড অপেক্ষা করা হচ্ছে...`);
+      console.log(`[ID ${index + 1}] অ্যান্টি-ব্যান প্রোটেকশন: ৬ সেকেন্ড অপেক্ষা করা হচ্ছে...`);
       await delay(6000);
     }
 
+    // অফিশিয়াল উইন্ডোজ ক্লায়েন্টের মতো স্পুফিং (Anti-Detection)
     const client = new Client({ 
       checkUpdate: false,
       syncStatus: false,
-      patchVoice: true, // ভয়েস প্রোটোকল স্ট্যাবল রাখার জন্য
+      patchVoice: true,
       ws: { properties: { "\$os": "Windows", "browser": "Discord Client", "release_channel": "stable" } }
     });
 
-    // ভিসি-তে জয়েন করার ফাংশন
     const connectToVC = async () => {
       try {
         const channel = await client.channels.fetch(VC_ID);
         if (channel) {
-          const connection = await client.voice.joinChannel(channel, {
-            selfMute: false, // আনমিউট রাখার জন্য false (Voice XP এর জন্য)
-            selfDeaf: false, // Undeaf রাখার জন্য false (Voice XP এর জন্য)
-            selfVideo: false // ক্যামেরা অফ থাকবে র‍্যাম বাঁচাতে
+          await client.voice.joinChannel(channel, {
+            selfMute: false, // আনমিউট (Voice XP কাউন্ট হবে)
+            selfDeaf: false, // আনডেফ
+            selfVideo: false 
           });
-          console.log(`[ID ${index + 1}] ${client.user.tag} আনমিউট অবস্থায় ভিসি-তে জয়েন করেছে।`);
-
-          // ডিসকর্ডের ভয়েস গেটওয়ে ড্রপ প্রোটেকশন (Keep-Alive Clicks)
-          if (connection) {
-            const keepVoiceAlive = () => {
-              if (client.ws.status !== 0) return;
-              try {
-                connection.setSpeaking(true);
-                setTimeout(() => { try { connection.setSpeaking(false); } catch(e){} }, 1000);
-              } catch (e) {}
-              setTimeout(keepVoiceAlive, 25000); // প্রতি ২৫ সেকেন্ড পর পর ফেক সিগন্যাল
-            };
-            keepVoiceAlive();
-          }
+          console.log(`[ID ${index + 1}] ${client.user.tag} সেফলি ভিসি-তে জয়েন করেছে।`);
         }
       } catch (err) {
         console.error(`[ID ${index + 1}] ভিসি জয়েন এরর: ${err.message}`);
-        setTimeout(connectToVC, 15000); // এরর আসলে ১৫ সেকেন্ড পর আবার ট্রাই করবে
+        // ভিসি ড্রপ করলে ১৫ সেকেন্ড পর আবার রিকানেক্ট ট্রাই করবে
+        setTimeout(connectToVC, 15000); 
       }
     };
 
     client.on('ready', async () => {
       console.log(`[ID ${index + 1}] ${client.user.tag} লগইন সফল!`);
-      await delay(3000); // লগইন হওয়ার ৩ সেকেন্ড পর ভিসি-তে হিট করবে
+      await delay(3000); // লগইন হওয়ার ৩ সেকেন্ড পর ভিসি জয়েন রিকোয়েস্ট (হিউম্যান অ্যাকশন সিমুলেশন)
       await connectToVC();
-
-      // লোগো ও টাইমারসহ স্ট্রিমিং স্ট্যাটাস (Watching Chithi Ghor)
-      await delay(2000);
-      try {
-        const r = new RichPresence(client)
-          .setType('STREAMING')
-          .setURL('https://twitch.tv') 
-          .setName('Chithi Ghor')
-          .setStartTimestamp(Date.now())
-          .setAssetsLargeImage('https://postimg.cc') 
-          .setAssetsLargeText('Chithi Ghor')
-          .addButton('Join Server', 'https://discord.gg'); // আসল ইনভাইট বসান
-
-        client.user.setActivity(r);
-      } catch (err) {
-        console.error(`[ID ${index + 1}] স্ট্যাটাস সেট এরর: ${err.message}`);
-      }
     });
 
-    // অটো-রিলগইন পলিসি
+    // ইন্টারনেট বা সার্ভার ড্রপ করলে রিলগইন পলিসি
     client.on('shardDisconnect', () => {
-      console.log(`[ID ${index + 1}] ডিসকানেক্টেড! ৭ সেকেন্ড পর আবার চেষ্টা করা হচ্ছে...`);
-      setTimeout(() => client.login(token).catch(e => {}), 7000);
+      console.log(`[ID ${index + 1}] ডিসকানেক্টেড! সেফটি পিরিয়ড (১০ সেকেন্ড) পর আবার চেষ্টা করা হচ্ছে...`);
+      setTimeout(() => client.login(token).catch(e => {}), 10000);
     });
 
-    // বটের লগইন ট্রিগার
-    client.login(token).catch(err => console.error(`[ID ${index + 1}] লগইন ব্যর্থ! এরর: ${err.message}`));
+    client.login(token).catch(err => console.error(`[ID ${index + 1}] লগইন ব্যর্থ! টোকেন চেক করুন।`));
   }
 };
 
-// বট চালু করা হলো
 startBots();
